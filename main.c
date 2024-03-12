@@ -12,15 +12,19 @@
 enum input_type {INTS=0, BYTES=1, KILOBYTES=2, MEGABYTES=3, GIGABYTES=4};
 
 int main(int argc, char *argv[]){
-	int opt;
+
 	long modifier;
 	enum input_type input = INTS;
+	long elements;
 
-	if (argc < 4){
+	srand(time(NULL));
+
+	if (argc != 3){
 		puts("USAGE: mem-stress-test [ARGS] [SIZE]\n\nAVAILABLE ARGS:\n-i: give input in sizeof(int)s\n-b: give input in bytes\n-k: give input in kilobytes\n-m: give input in megabytes\n-g: give input in gigabytes\n");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
-	while ((opt = getopt(argc, argv, "ibkmg")) != -1){
+	int opt;
+	opt = getopt(argc, argv, "i:b:k:m:g:");
 		switch(opt){
 			case 'i':
 				modifier = sizeof(int);
@@ -38,26 +42,24 @@ int main(int argc, char *argv[]){
 				modifier = GB;
 				break;
 			default:
-				abort();
+				printf("UNKNOWN OPTION: %c", opt);
+				exit(EXIT_FAILURE);
 				break;
 		}
+	elements = strtol(optarg, NULL, 10);
+
+	
+    	//int *MyInt = malloc(numOfInts * sizeof(int)); //DELETE SOON
+	int *BigInt = mmap(NULL, modifier * elements, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+	if (BigInt == MAP_FAILED){
+		perror("MMAP HAS FAILED\n");
+		exit(EXIT_FAILURE);
 	}
 
-
-
-	//srand(time(NULL));
-    	int numOfInts = strtol(argv[1], NULL, 10);
+	struct timespec initial;
+	clock_gettime(CLOCK_REALTIME, &initial);
 	
-	printf("%lu", strlen(argv[1]));
-    	//int *MyInt = malloc(numOfInts * sizeof(int));
-	int *BigInt = mmap(BigInt, modifier * number, PROT_READ | PROT_WRITE, MAP_PRIVATE);
-
-	for (int offset = 0; offset < numOfInts; offset++){
-		int value = rand() % 100;
-		BigInt[offset] = value;
-        	printf("ELEMENT %d: %d\n", offset, MyInt[offset]);
-	}
 	
-	free(BigInt);
-	return 0;
+	munmap(BigInt, modifier * elements);
+	return EXIT_SUCCESS;
 }
