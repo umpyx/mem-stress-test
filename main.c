@@ -4,7 +4,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-#include <math.h>
 #include <sys/mman.h>
 
 #define KB 1000
@@ -39,15 +38,12 @@ int main(int argc, char *argv[]){
 	srand(time(NULL));
 
 	if (argc != 4){
-		puts("USAGE: mem-stress-test [TYPE] [SIZE] [TESTS]\n\nAVAILABLE ARGS:\n-i: give input in sizeof(int)s\n-b: give input in bytes\n-k: give input in kilobytes\n-m: give input in megabytes\n-g: give input in gigabytes\n\nRuns \033[;;4mTESTS\033[m test polls on memory latency time\n\n");
+		puts("USAGE: mem-stress-test [TYPE] [SIZE] [TESTS]\n\nAVAILABLE ARGS:\n-b: give input in bytes\n-k: give input in kilobytes\n-m: give input in megabytes\n-g: give input in gigabytes\n\nRuns \033[;;4mTESTS\033[m test polls on memory latency time\n\n");
 		exit(EXIT_FAILURE);
 	}
 	int opt;
-	opt = getopt(argc, argv, "i:b:k:m:g:");
+	opt = getopt(argc, argv, "b:k:m:g:");
 	switch(opt){
-		case 'i':
-			modifier = sizeof(int);
-			break;
 		case 'b':
 			modifier = sizeof(char);
 			break;
@@ -73,8 +69,8 @@ int main(int argc, char *argv[]){
 		exit(EXIT_FAILURE);
 	}
 	
-	char *BigInt = mmap(NULL, modifier * elements, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-	if (BigInt == MAP_FAILED){
+	char *BigChar = mmap(NULL, modifier * elements, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+	if (BigChar == MAP_FAILED){
 		perror("MMAP HAS FAILED\n");
 		exit(EXIT_FAILURE);
 	}
@@ -90,13 +86,13 @@ int main(int argc, char *argv[]){
 		 */
 		if (address % 1000 == 0){
  			clock_gettime(CLOCK_REALTIME, &initialTime);
-			*(BigInt + count) = value;
+			*(BigChar + count) = value;
 			clock_gettime(CLOCK_REALTIME, &finalTime);
 			totaltime += (finalTime.tv_nsec - initialTime.tv_nsec);
 			count += 1;
 		}
 		else{
-			*(BigInt + address) = value;
+			*(BigChar + address) = value;
 		}
 	}
 	AverageOutput();
@@ -108,14 +104,14 @@ int main(int argc, char *argv[]){
 
 		offset = rand() % (elements - 1);
  		clock_gettime(CLOCK_REALTIME, &initialTime);
-		char x = *(BigInt + (offset));
+		char x = *(BigChar + (offset));
 		clock_gettime(CLOCK_REALTIME, &finalTime);
 		totaltime += (finalTime.tv_nsec - initialTime.tv_nsec);
 
 	}
 	AverageOutput();
 	
-	munmap(BigInt, modifier * elements);
+	munmap(BigChar, modifier * elements);
 
 
 	return EXIT_SUCCESS;
